@@ -6,7 +6,7 @@ import scipy.io
 import cv2
 from PIL import Image
 from set_pixelfeature import set_pixelfeatures
-from GOG_C1_copy import GOG_C1
+from feature_extractor import GOG_C1
 
 parser = argparse.ArgumentParser(description='Person ReID')
 
@@ -121,9 +121,8 @@ def main():
     elif args.database not in range(8):
         print("Database is not defined!!!")
     
-    #print(DBfile)
+
     Data = scipy.io.loadmat(DBfile)  
-    #print("All image names are: ",Data['allimagenames'].shape)
     all_image_names = Data['allimagenames']
     allimagenums = int(Data['allimagenames'].shape[0])
     #image size for resize
@@ -149,20 +148,18 @@ def main():
     print("Feature setting is ", args.feature_settings)
     for f in range(parFea.featurenum):
     	parFea.featureConf[f] = set_default_parameter(f)
-        #print(parFea.featureConf[f].name)
     ##########Feature Extraction########################
 
     print('*** low level feature extraction *** ')
     print('database = ', databasename)
+
     #Extracting features for all images
     print('Extract feature for all images \n')
-
     for f in range(parFea.featurenum):
     	if parFea.usefeature[f] == 1:
         	param = parFea.featureConf[f]
                 print(param.name)
                 feature_all = np.zeros((allimagenums, param.dimension))
-                print(feature_all.shape)
                 t_0 = time.clock()
                 for imgind in range(allimagenums):
                         print("Processing image ",imgind)
@@ -170,23 +167,20 @@ def main():
                         	print('imging = ',imgind,allimagenums)
                         path = str(all_image_names[imgind])
                         path_final = os.path.join(datadirname,path[10:(len(path)-18)])
-                        print(path_final)
-                        #print(path[9:(len(path)-17)])
                         X = cv2.imread(path_final,1)
                         if X.shape != (H,W,3):
-                                #print("Resizing")
-                        	X = cv2.resize(X,(W,H))
-                        #print("Final_shape", X.shape,Y.shape)
+                               X = cv2.resize(X,(W,H))
+                        
 			feature_all[imgind,:] = GOG_C1(X)
-		#print(feature_all)
+		
 		t_1 = time.clock()
 		mean_time = t_1/allimagenums
 		print("Mean feature extraction time is {} seconds per image".format(round(mean_time,3)))
-		#print("Feature all", param.name)
-		path_name = featuredirname + databasename+'_'+  param.name # change it to csv file or numpy array npy format
+		###Saving the extracted features###
+		#path_name = featuredirname + databasename+'_'+  param.name 
                 name = databasename+'_'+  param.name
                 np.save(name,feature_all)
-                np.savetxt(name, feature_all, fmt='%.18e', delimiter=' ', newline='\n', header='', footer='', comments='# ', encoding=None)
+              
   
 if __name__ == '__main__':
     main()
