@@ -270,13 +270,16 @@ def dataloader():
     probXLabels = labelsX[camIDs == 1]
     galXLabels = labelsX[camIDs == 2]  
     print("Done", probX.shape,galX.shape,probXLabels.shape,galXLabels.shape)
-
-    [K, alpha] = k.KLDA_train(probX, galX, probXLabels, galXLabels);
-    print('KLDA Training Ended Aplha Parameter Saved \n')
+    if path.exists("alpha.npy") == True:
+    	pass
+    else:
+	[K, alpha] = k.KLDA_train(probX, galX, probXLabels, galXLabels);
+	print('KLDA Training Ended Aplha Parameter Saved \n')
+    	alpha = np.squeeze(alpha)
+    	np.save('alpha',alpha)
     print('Training Completed \n')
-    alpha = np.squeeze(alpha)
-    np.save('alpha',alpha)
+    
     
     ############Find Person######################
-    return alpha,Data,parFea	
+    return Data,parFea	
 	
