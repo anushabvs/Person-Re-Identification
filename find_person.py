@@ -70,7 +70,7 @@ def main():
     args = parser.parse_args()
     path = '/home/user/Downloads/KLDA_iitb_ICVGIP_2018-20200912T102424Z-001/KLDA_iitb_ICVGIP_2018/KLDA_iitb_ICVGIP_2018/'
     img = cv2.imread(path+'/DatasetIITB/cropped_s4c1_test/228b/228_0.jpg',1)
-    a,Data,parFea =  dn.dataloader()
+    Data,parFea =  dn.dataloader()
     alpha = np.load('alpha_1.npy')
     print('*** load all extracted features ***')
     feature_cell_all = np.zeros((parFea.featurenum, ), dtype=np.object)
