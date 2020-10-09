@@ -9,6 +9,7 @@ from set_pixelfeature import set_pixelfeatures
 from GOG_C1_copy import GOG_C1
 import Feature_normalization
 import KLDA as k
+import utils as ut
 
 parser = argparse.ArgumentParser(description='Person ReID')
 
@@ -32,7 +33,7 @@ def set_default_parameter(lf_type):
 		dimlocal = (m*m + 3*m)/2 + 1 #dimension of region Gaussian vector
 		dimension = int(G*dimlocal) #dimension of feature vector
 		name = 'GOG' + lfparam.lf_name
-                print(dimension)
+                #print(dimension)
 	return param
 
 
@@ -153,7 +154,7 @@ def dataloader():
     print("Feature setting is ", args.feature_settings)
     for f in range(parFea.featurenum):
     	parFea.featureConf[f] = set_default_parameter(f)
-   
+        #print(parFea.featureConf[f].name)
     ##########Feature Extraction########################
 
     print('*** low level feature extraction *** ')
@@ -187,9 +188,9 @@ def dataloader():
 		print("Mean feature extraction time is {} seconds per image".format(round(mean_time,3)))
 		#print("Feature all", param.name)
 		path_name = featuredirname + databasename+'_'+  param.name # change it to csv file or numpy array npy format
-                name = databasename+'_'+ 'feature_all_' + param.name
+                name = databasename+'_'+  param.name
                 np.save(name,feature_all)
-                
+                #np.savetxt(name, feature_all, fmt='%.18e', delimiter=' ', newline='\n', header='', footer='', comments='# ', encoding=None)
     '''
     ########KLDA_train##########
     #Loading the features
@@ -205,6 +206,7 @@ def dataloader():
         temp = np.load(name)
         feature_cell_all[f] =temp
 
+    print(feature_cell_all[0].shape)
     traininds_set = Data['traininds_set'][0] + 1
     trainlabels_set = Data['trainlabels_set'][0]+ 1
     testinds_set = Data['testinds_set'][0] + 1
@@ -218,6 +220,8 @@ def dataloader():
     print('Training Data!!!!')
     tot = 1;
     #extract feature cells for particular training/test division
+    feature_cell = ut.extract_feature_cell_from_all(tot,s,traininds_set,testinds_set,feature_cell_all,parFea.featurenum,parFea.usefeature)
+    '''
     feature_cell = np.zeros((parFea.featurenum, ), dtype=np.object)
     if tot == 1:
         numimages_train = np.size(traininds_set[s])
@@ -227,7 +231,7 @@ def dataloader():
                 feature_cell[f] = np.zeros(( numimages_train, feature_cell_all[f].shape[1]))
                 for ind in range (numimages_train):
                     feature_cell[f][ind,:] = feature_cell_all[f][traininds_set[s][ind, :]]
-    print("This is done", feature_cell[0].shape)
+    #print("This is done", feature_cell[0].shape)
 
     if tot == 2:
         numimages_test = np.size(testinds_set[s])
@@ -237,7 +241,7 @@ def dataloader():
                 for ind in range(numimages_test):
                     feature_cell[f][ind,:] = feature_cell_all[f][testinds_set[s][ind, :]]
     
-
+    '''
     d = Feature_normalization.feature_normalize()
     #extract_feature_cell_from_all;  % load training data 
     if(args.normalization==1):
@@ -249,27 +253,20 @@ def dataloader():
     else:
         print('Undefined normalization setting \n');
         assert(False)
-    isfirst = 1
-    for f in range(parFea.featurenum):
-        if parFea.usefeature[f] == 1:
-            if isfirst == 1:
-                feature = features[f]
-                #print(feature.shape)
-                isfirst = 0
-            else:
-                feature2 = features[f]  
-                feature = np.hstack((feature,feature2))
-  
+ 
+    feature = ut.conc_feature_cell(parFea.featurenum,parFea.usefeature,features)
+    
     #train NFST metric learning
     camIDs = traincamIDs_set[s]
     prob_1 = np.where(camIDs==1)
-    p = camIDs[prob_1].shape[0]
-    probX = feature[0:p, :]  
-    galX = feature[p:camIDs.shape[0], :]
+    p_1 = camIDs[prob_1].shape[0]
+    probX = feature[0:p_1, :]  
+    galX = feature[p_1:camIDs.shape[0], :]  
     labelsX = trainlabels_set[s]
     probXLabels = labelsX[camIDs == 1]
-    galXLabels = labelsX[camIDs == 2]  
-    print("Done", probX.shape,galX.shape,probXLabels.shape,galXLabels.shape)
+    galXLabels = labelsX[camIDs == 2]
+    print("Completed loading training parameters!!!")
+  
     if path.exists("alpha.npy") == True:
     	pass
     else:
