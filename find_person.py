@@ -4,7 +4,6 @@ import Dataloader as dn
 import os,sys
 import time
 import scipy.io
-import cv2
 import argparse
 from PIL import Image
 from set_pixelfeature import set_pixelfeatures
